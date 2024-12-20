@@ -3,6 +3,17 @@
 #include <dsps_fft2r.h>
 // #include <dsp_math.h>
 #include "esp_dsp.h"
+#include <FastLED.h>
+
+#ifndef WS2812_NUM_LEDS
+#define WS2812_NUM_LEDS 1 + 5
+#endif
+#define COLOR_ORDER GRB
+#define CHIPSET WS2811
+
+CRGB leds[WS2812_NUM_LEDS];
+CRGBPalette16 currentPalette;
+TBlendType currentBlending;
 
 static const char *TAG = "main";
 
@@ -20,8 +31,19 @@ inline float lerp(float start, float end, float t) {
   return (1 - t) * start + t * end;
 }
 
+void updateLeds(float amplitude) {
+  for (int i = 0; i < WS2812_NUM_LEDS; i++) {
+    leds[i] = CRGB(amplitude, amplitude,
+                   amplitude); // CHSV(amplitude, amplitude, amplitude);
+  }
+  FastLED.show();
+}
+
 void setup() {
   Serial.begin(115200);
+
+  FastLED.addLeds<CHIPSET, WS2812_PIN, COLOR_ORDER>(leds, WS2812_NUM_LEDS)
+      .setCorrection(TypicalLEDStrip);
 
   delay(1000);
   pinMode(EN_PIN, OUTPUT);
@@ -57,6 +79,7 @@ void setup() {
   i2s_start(I2S_PORT);
 
   delay(500);
+  updateLeds(127);
 }
 
 void loop() {
@@ -74,7 +97,7 @@ void loop() {
 
       newMean /= samples_read;
 
-      newMean = min(abs(newMean / 5), 255.f);
+      newMean = min(abs(newMean), 255.f);
 
       if (newMean > mean) {
         mean = newMean;
