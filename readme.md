@@ -10,8 +10,9 @@
   <a href="#license">License</a>
 </p>
 
+<img src="images/ferrofluid.gif" width="300"/>
+
 </div>
-<!-- GIF ![screenshot](https://raw.githubusercontent.com/runeharlyk/SpotMicro-Leika/main/assets/logo.jpg) -->
 
 ## 📜 Overview
 
@@ -24,7 +25,9 @@ Built on an ESP32 with an electro magnet, some leds and an I2S microphone.
 | ESP32                 | Brain of the system  |
 | Ferrofluid in bottle  | Little alien         |
 | D50H27mm 55KG, DC 12V | Electromagnet        |
-| LN298N                | Electromagnet driver |
+| D880                  | Electromagnet driver |
+| N4007                 | Flyback diode        |
+| 1k Resistor           |                      |
 | MT3608                | Step up for driver   |
 | INMP441               | I2S microphone       |
 | WS2811                | Leds                 |
