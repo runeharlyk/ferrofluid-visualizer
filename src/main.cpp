@@ -1,12 +1,13 @@
+#include "Biquad.h"
+#include "esp_dsp.h"
 #include <Arduino.h>
+#include <BiquadFilterTypes.h>
+#include <FastLED.h>
 #include <driver/i2s.h>
 #include <dsps_fft2r.h>
-// #include <dsp_math.h>
-#include "esp_dsp.h"
-#include <FastLED.h>
 
 #ifndef WS2812_NUM_LEDS
-#define WS2812_NUM_LEDS 1 + 5
+#define WS2812_NUM_LEDS 6
 #endif
 #define COLOR_ORDER GRB
 #define CHIPSET WS2811
@@ -27,6 +28,8 @@ int16_t sBuffer[bufferLen];
 
 float mean = 0;
 
+Biquad bq;
+
 inline float lerp(float start, float end, float t) {
   return (1 - t) * start + t * end;
 }
@@ -44,6 +47,9 @@ void setup() {
 
   FastLED.addLeds<CHIPSET, WS2812_PIN, COLOR_ORDER>(leds, WS2812_NUM_LEDS)
       .setCorrection(TypicalLEDStrip);
+
+  BiquadInit(&bq);
+  BiquadLowpass(&bq, 0.0707, 500, SAMPLE_RATE);
 
   delay(1000);
   pinMode(EN_PIN, OUTPUT);
@@ -87,29 +93,33 @@ void loop() {
   esp_err_t result =
       i2s_read(I2S_PORT, &sBuffer, bufferLen, &bytesIn, portMAX_DELAY);
 
-  if (result == ESP_OK) {
-    int16_t samples_read = bytesIn / 8;
-    if (samples_read > 0) {
-      float newMean = 0;
-      for (int16_t i = 0; i < samples_read; ++i) {
-        newMean += (sBuffer[i]);
-      }
+  if (result != ESP_OK)
+    return;
 
-      newMean /= samples_read;
+  int16_t samples_read = bytesIn / sizeof(int16_t);
 
-      newMean = min(abs(newMean), 255.f);
+  if (!samples_read)
+    return;
 
-      if (newMean > mean) {
-        mean = newMean;
-      } else {
-        mean = lerp(mean, newMean, 0.1);
-      }
+  float newMean = 0;
+  float sum = 0.0f;
 
-      analogWrite(EN_PIN, mean);
-
-      Serial.printf("%f\n", mean);
-    }
-  } else {
-    Serial.println("Error reading I2S data");
+  for (int16_t i = 0; i < samples_read; ++i) {
+    float s = static_cast<float>(sBuffer[i]);
+    float temp = BiquadUpdate(&bq, s);
+    sum += temp * temp;
+    newMean += temp;
   }
+
+  sum = min(sqrt(sum / samples_read), 255.f);
+
+  newMean /= samples_read;
+
+  newMean = min(abs(newMean), 255.f);
+
+  mean = (newMean > mean) ? newMean : lerp(mean, newMean, 0.2);
+
+  Serial.printf("%f, %f, %f\n", sum, mean, newMean);
+
+  analogWrite(EN_PIN, static_cast<int>(newMean));
 }
