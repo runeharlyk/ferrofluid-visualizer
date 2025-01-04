@@ -20,17 +20,17 @@ Built on an ESP32 with an electro magnet, some leds and an I2S microphone.
 
 ## 📃 Bill of Materials (BOM)
 
-| Component             | Description          |
-| --------------------- | -------------------- |
-| ESP32                 | Brain of the system  |
-| Ferrofluid in bottle  | Little alien         |
-| D50H27mm 55KG, DC 12V | Electromagnet        |
-| D880                  | Electromagnet driver |
-| N4007                 | Flyback diode        |
-| 1k Resistor           |                      |
-| MT3608                | Step up for driver   |
-| INMP441               | I2S microphone       |
-| WS2811                | Leds                 |
+| Component                       | Description          |
+| ------------------------------- | -------------------- |
+| ESP32                           | Brain of the system  |
+| Ferrofluid in bottle            | Little alien         |
+| D50H27mm 55KG, DC 12V           | Electromagnet        |
+| D880 or any other suited mosfet | Electromagnet driver |
+| N4007 or any other suited diode | Flyback diode        |
+| 1k Resistor                     |                      |
+| MT3608                          | Step up for driver   |
+| INMP441                         | I2S microphone       |
+| WS2811                          | Leds                 |
 
 ## 🔮 Getting started
 
