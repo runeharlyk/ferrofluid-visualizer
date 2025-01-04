@@ -12,10 +12,6 @@
 #define COLOR_ORDER GRB
 #define CHIPSET WS2811
 
-CRGB leds[WS2812_NUM_LEDS];
-CRGBPalette16 currentPalette;
-TBlendType currentBlending;
-
 static const char *TAG = "main";
 
 #define CEIL(x) ((x) == (int)(x) ? (x) : ((x) > 0 ? (int)(x) + 1 : (int)(x)))
@@ -29,6 +25,9 @@ static const char *TAG = "main";
 #define LOWPASS 150
 #define BIN_RANGE (CEIL(LOWPASS / RESOLUTION) + 1)
 
+CRGB leds[WS2812_NUM_LEDS];
+CRGBPalette16 currentPalette;
+TBlendType currentBlending;
 int16_t sBuffer[N];
 
 float fft_table[2 * N];
@@ -53,29 +52,7 @@ void updateLeds(float amplitude) {
   FastLED.show();
 }
 
-void setup() {
-  Serial.begin(115200);
-
-  FastLED.addLeds<CHIPSET, WS2812_PIN, COLOR_ORDER>(leds, WS2812_NUM_LEDS)
-      .setCorrection(TypicalLEDStrip);
-
-  BiquadInit(&bq);
-  BiquadLowpass(&bq, 0.707, LOWPASS, SAMPLE_RATE);
-
-  delay(1000);
-  pinMode(EN_PIN, OUTPUT);
-  analogWrite(EN_PIN, 0);
-
-  esp_err_t ret;
-  ESP_LOGI(TAG, "Start Example.");
-  dsps_wind_hann_f32(wind, N);
-  ret = dsps_fft2r_init_fc32(NULL, N);
-
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG, "Not possible to initialize FFT. Error = %i", ret);
-    return;
-  }
-
+void setup_i2s() {
   const i2s_config_t i2s_config = {
       .mode = i2s_mode_t(I2S_MODE_MASTER | I2S_MODE_RX),
       .sample_rate = SAMPLE_RATE,
@@ -96,6 +73,31 @@ void setup() {
 
   i2s_set_pin(I2S_PORT, &pin_config);
   i2s_start(I2S_PORT);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  FastLED.addLeds<CHIPSET, WS2812_PIN, COLOR_ORDER>(leds, WS2812_NUM_LEDS)
+      .setCorrection(TypicalLEDStrip);
+
+  BiquadInit(&bq);
+  BiquadLowpass(&bq, 0.707, LOWPASS, SAMPLE_RATE);
+
+  delay(1000);
+  pinMode(EN_PIN, OUTPUT);
+  analogWrite(EN_PIN, 0);
+
+  esp_err_t ret;
+  dsps_wind_hann_f32(wind, N);
+  ret = dsps_fft2r_init_fc32(NULL, N);
+
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Not possible to initialize FFT. Error = %i", ret);
+    return;
+  }
+
+  setup_i2s();
 
   delay(500);
   updateLeds(127);
