@@ -20,17 +20,26 @@ Built on an ESP32 with an electro magnet, some leds and an I2S microphone.
 
 ## 📃 Bill of Materials (BOM)
 
-| Component                       | Description          |
-| ------------------------------- | -------------------- |
-| ESP32                           | Brain of the system  |
-| Ferrofluid in bottle            | Little alien         |
-| D50H27mm 55KG, DC 12V           | Electromagnet        |
-| D880 or any other suited mosfet | Electromagnet driver |
-| N4007 or any other suited diode | Flyback diode        |
-| 1k Resistor                     |                      |
-| MT3608                          | Step up for driver   |
-| INMP441                         | I2S microphone       |
-| WS2811                          | Leds                 |
+| Component                       | Description          | Required |
+| ------------------------------- | -------------------- | -------- |
+| ESP32                           | Brain of the system  | Yes      |
+| Ferrofluid in bottle            | Little alien         | Yes      |
+| D50H27mm 55KG, DC 12V           | Electromagnet        | Yes      |
+| D880 or any other suited mosfet | Electromagnet driver | Yes      |
+| N4007 or any other suited diode | Flyback diode        | Yes      |
+| 1k Resistor                     |                      | Yes      |
+| MT3608                          | Step up for driver   | Yes      |
+| INMP441                         | I2S microphone       | Yes      |
+| WS2811                          | Leds                 | No       |
+| USB C Male                      |                      | No       |
+| USB C Female                    |                      | No       |
+| USB C Female                    |                      | No       |
+| 2x Screw terminals              |                      | No       |
+| Slide Switch                    | Power On / Off       | No       |
+
+| <img src="images/driver.jpg" width="300"/> | <img src="images/driver_back.jpg" width="300"/> |
+
+| <img src="images/optional_components.jpg" width="300"/> | <img src="images/assemble.jpg" height="300"/> |
 
 ## 🔮 Getting started
 
