@@ -49,7 +49,7 @@ void setup() {
       .setCorrection(TypicalLEDStrip);
 
   BiquadInit(&bq);
-  BiquadLowpass(&bq, 0.0707, 500, SAMPLE_RATE);
+  BiquadLowpass(&bq, 0.707, 500, SAMPLE_RATE);
 
   delay(1000);
   pinMode(EN_PIN, OUTPUT);
