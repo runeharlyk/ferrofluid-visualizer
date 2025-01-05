@@ -24,7 +24,7 @@ int16_t sBuffer[N];
 
 CRGB leds[WS2812_NUM_LEDS];
 
-float mean = 0;
+float rms = 0;
 
 Biquad bq;
 
@@ -95,26 +95,19 @@ void loop() {
   if (!samples_read)
     return;
 
-  float newMean = 0;
   float energy_sum = 0.0f;
 
   for (int16_t i = 0; i < samples_read; ++i) {
     float s = static_cast<float>(sBuffer[i]);
     float temp = BiquadUpdate(&bq, s);
-    float energy = temp * temp;
-    energy_sum += energy;
-    newMean += temp;
+    energy_sum += temp * temp;
   }
 
-  float rms = min(sqrt(energy_sum / samples_read), 255.f);
+  float new_rms = min(sqrt(energy_sum / samples_read), 255.f);
 
-  newMean /= samples_read;
+  rms = (new_rms > rms) ? new_rms : lerp(rms, new_rms, 0.1);
 
-  newMean = min(abs(newMean), 255.f);
+  Serial.printf("%f\n", rms);
 
-  mean = (newMean > mean) ? newMean : lerp(mean, newMean, 0.1);
-
-  Serial.printf("%f, %f, %f\n", rms, mean, newMean);
-
-  analogWrite(EN_PIN, static_cast<int>(newMean));
+  analogWrite(EN_PIN, static_cast<int>(rms));
 }
