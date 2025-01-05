@@ -14,16 +14,14 @@
 
 static const char *TAG = "main";
 
-#define CEIL(x) ((x) == (int)(x) ? (x) : ((x) > 0 ? (int)(x) + 1 : (int)(x)))
-
 #define I2S_PORT I2S_NUM_0
 
-#define N 64
-#define SAMPLE_RATE 16000 // 44100
+#define SAMPLE_RATE 1280 // 44100
+#define N (SAMPLE_RATE / 10)
 #define RESOLUTION (SAMPLE_RATE / N)
 
 #define LOWPASS 150
-#define BIN_RANGE (CEIL(LOWPASS / RESOLUTION) + 1)
+#define BIN_RANGE (LOWPASS * N / SAMPLE_RATE + 1)
 
 CRGB leds[WS2812_NUM_LEDS];
 CRGBPalette16 currentPalette;
@@ -45,10 +43,8 @@ inline float lerp(float start, float end, float t) {
 }
 
 void updateLeds(float amplitude) {
-  for (int i = 0; i < WS2812_NUM_LEDS; i++) {
-    leds[i] = CRGB(amplitude, amplitude,
-                   amplitude); // CHSV(amplitude, amplitude, amplitude);
-  }
+  for (int i = 0; i < WS2812_NUM_LEDS; i++)
+    leds[i] = CRGB(amplitude, amplitude, amplitude);
   FastLED.show();
 }
 
@@ -77,6 +73,10 @@ void setup_i2s() {
 
 void setup() {
   Serial.begin(115200);
+  ESP_LOGI(TAG, "LOWPASS: %i", LOWPASS);
+  ESP_LOGI(TAG, "N: %i", N);
+  ESP_LOGI(TAG, "BIN_RANGE: %i", BIN_RANGE);
+  ESP_LOGI(TAG, "RESOLUTION: %i", RESOLUTION);
 
   FastLED.addLeds<CHIPSET, WS2812_PIN, COLOR_ORDER>(leds, WS2812_NUM_LEDS)
       .setCorrection(TypicalLEDStrip);
