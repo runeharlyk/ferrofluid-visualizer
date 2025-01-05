@@ -20,16 +20,25 @@ Built on an ESP32 with an electro magnet, some leds and an I2S microphone.
 
 ## 🧮 Processing
 
-To detect beat we are calculating the fourier transformation of the microphone signal.
-This allows us to convert the signal from time domain to frequency domain.
-But we have to keep in mind what frequencies we are looking for to mitigate the aliasing artifacts.
+To detect beats we are calculating the energy of the microphone signal.
+We firstly use a biquad filter as low pass to isolate the beat frequencies.
+
+<!-- But we have to keep in mind what frequencies we are looking for to mitigate the aliasing artifacts. -->
 
 Let say we sample with a rate of $f_s=16000$,
-a window size of $N=128$ and is looking for the energy of frequencies between $[0-f_c[$ where $f_c=150hz$.
+a window size of $N=64$ and is looking for the energy of frequencies between $[0-f_c[$ where $f_c=150hz$.
 
-This can be use to calculate the bin size of $bin_{size}=\lceil\frac{f_c \cdot N}{f_s}\rceil\approx 10$
+We calculate the energy of the low pass filtered sampled signal using rms:
 
-We are only interested in the max energy (or total), as a beat does not have to fill the range.
+$E_{RMS}=\sqrt{\frac{1}{N}\sum_{i}x_i^2}$
+
+If the energy is higher than the previous energy sample, we update to that value else we do a linear interpolation.
+
+This helps with spikes, as the magnet has time to attract the fluid before settling down.
+
+<!-- This can be use to calculate the bin size of $bin_{size}=\lceil\frac{f_c \cdot N}{f_s}\rceil\approx 10$ . -->
+
+<!-- We are only interested in the max energy (or total), as a beat does not have to fill the range. -->
 
 ## 📃 Bill of Materials (BOM)
 

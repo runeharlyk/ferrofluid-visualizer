@@ -14,27 +14,17 @@
 
 static const char *TAG = "main";
 
+#define SAMPLE_RATE 16000
+#define N 64
+#define LOWPASS 150
+
 #define I2S_PORT I2S_NUM_0
 
-#define SAMPLE_RATE 1280 // 44100
-#define N (SAMPLE_RATE / 10)
-#define RESOLUTION (SAMPLE_RATE / N)
-
-#define LOWPASS 150
-#define BIN_RANGE (LOWPASS * N / SAMPLE_RATE + 1)
-
-CRGB leds[WS2812_NUM_LEDS];
-CRGBPalette16 currentPalette;
-TBlendType currentBlending;
 int16_t sBuffer[N];
 
-float fft_table[2 * N];
-float fft_data[2 * N];
-float fft_result[N / 2];
-__attribute__((aligned(16))) float wind[N];
+CRGB leds[WS2812_NUM_LEDS];
 
 float mean = 0;
-float range_amplitude = 0.0f;
 
 Biquad bq;
 
@@ -75,8 +65,6 @@ void setup() {
   Serial.begin(115200);
   ESP_LOGI(TAG, "LOWPASS: %i", LOWPASS);
   ESP_LOGI(TAG, "N: %i", N);
-  ESP_LOGI(TAG, "BIN_RANGE: %i", BIN_RANGE);
-  ESP_LOGI(TAG, "RESOLUTION: %i", RESOLUTION);
 
   FastLED.addLeds<CHIPSET, WS2812_PIN, COLOR_ORDER>(leds, WS2812_NUM_LEDS)
       .setCorrection(TypicalLEDStrip);
@@ -87,15 +75,6 @@ void setup() {
   delay(1000);
   pinMode(EN_PIN, OUTPUT);
   analogWrite(EN_PIN, 0);
-
-  esp_err_t ret;
-  dsps_wind_hann_f32(wind, N);
-  ret = dsps_fft2r_init_fc32(NULL, N);
-
-  if (ret != ESP_OK) {
-    ESP_LOGE(TAG, "Not possible to initialize FFT. Error = %i", ret);
-    return;
-  }
 
   setup_i2s();
 
@@ -117,42 +96,17 @@ void loop() {
     return;
 
   float newMean = 0;
-  float sum = 0.0f;
+  float energy_sum = 0.0f;
 
   for (int16_t i = 0; i < samples_read; ++i) {
     float s = static_cast<float>(sBuffer[i]);
-    fft_data[2 * i] = s * wind[i]; // Real part
-    fft_data[2 * i + 1] = 0;       // Imaginary part
     float temp = BiquadUpdate(&bq, s);
-    sum += temp * temp;
+    float energy = temp * temp;
+    energy_sum += energy;
     newMean += temp;
   }
 
-  dsps_fft2r_fc32(fft_data, N);
-  dsps_bit_rev_fc32(fft_data, N);
-
-  for (int i = 0; i < N / 2; i++) {
-    float real = fft_data[2 * i];
-    float imag = fft_data[2 * i + 1];
-    fft_result[i] = sqrt(real * real + imag * imag) / 32768.f * 255.f;
-    // Serial.printf("255, 0, %f, ", fft_result[i] / 32768.f * 255.f);
-  }
-
-  float new_range_amplitude = 0.0f;
-
-  for (int i = 1; i < N / 2; i++) {
-    new_range_amplitude = max(new_range_amplitude, fft_result[i]);
-  }
-
-  new_range_amplitude = min(new_range_amplitude * 3, 255.f);
-
-  range_amplitude = (new_range_amplitude > range_amplitude)
-                        ? new_range_amplitude
-                        : lerp(range_amplitude, new_range_amplitude, 0.1);
-
-  Serial.println(new_range_amplitude);
-
-  sum = min(sqrt(sum / samples_read), 255.f);
+  float rms = min(sqrt(energy_sum / samples_read), 255.f);
 
   newMean /= samples_read;
 
@@ -160,7 +114,7 @@ void loop() {
 
   mean = (newMean > mean) ? newMean : lerp(mean, newMean, 0.1);
 
-  // Serial.printf("%f, %f, %f\n", sum, mean, newMean);
+  Serial.printf("%f, %f, %f\n", rms, mean, newMean);
 
-  analogWrite(EN_PIN, static_cast<int>(range_amplitude));
+  analogWrite(EN_PIN, static_cast<int>(newMean));
 }
